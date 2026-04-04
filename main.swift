@@ -1,11 +1,13 @@
 /*
  Membros: Felipe da Veiga Gomes - Luz RGB(Tipo Comando, Controlavel e Extension Controlavel)
+ Rogerio de Abreu - Termostato
 
  Parte desenvolvida:
  - Enum TipoComando
  - Protocolo Controlavel
  - Extension verificarConexao()
  - Struct LuzRGB
+ - Struct Termostato
 
 */
 //1. Modelo de Comandos
@@ -52,6 +54,27 @@ struct LuzRGB: Controlavel {
     }
 }
 
+// Struct do Termostato
+struct Termostato: Controlavel {
+    var nome: String
+    var ambiente: String
+    
+    func processarComando(tipo: TipoComando, valor: String? = nil) {
+        switch tipo {
+        case .ligar:
+            print("❄️ \(nome) na \(ambiente) recebeu comando ligar. Temperatura alvo: \(valor ?? "Padrão") graus")
+        case .desligar:
+            print("❄️ \(nome) na \(ambiente) foi desligado.")
+        case .ajustar:
+            guard let valor = valor, !valor.isEmpty else {
+                print("Informe uma temperatura para ajuste.")
+                return
+            }
+            print("❄️ \(nome) na \(ambiente) ajustou a temperatura para: \(valor) graus")
+        }
+    }
+}
+
 // Teste LuzRGB
 let luzSala = LuzRGB(nome: "Luz Principal", ambiente: "Sala")
 
@@ -59,4 +82,12 @@ luzSala.verificarConexao()
 luzSala.processarComando(tipo: .ligar)
 luzSala.processarComando(tipo: .ajustar, valor: "Azul")
 luzSala.processarComando(tipo: .desligar)
+
+// Teste Termostato
+let arCondicionadoQuarto = Termostato(nome: "Ar Condicionado", ambiente: "Quarto")
+
+arCondicionadoQuarto.verificarConexao()
+arCondicionadoQuarto.processarComando(tipo: .ligar, valor: "Padrão")
+arCondicionadoQuarto.processarComando(tipo: .ajustar, valor: "22")
+arCondicionadoQuarto.processarComando(tipo: .desligar)
 
