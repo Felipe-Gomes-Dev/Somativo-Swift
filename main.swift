@@ -3,11 +3,13 @@
  Felipe da Veiga Gomes - Luz RGB(Tipo Comando, Controlavel e Extension Controlavel)
  Rogerio de Abreu - Termostato
  Alex Narok Stavasz - CameraSeguranca + mutating + ajustes
+ Logan Ail Bernardes Borges - Central de Controle, Loop da casa, Comandos finais, Filtro por ambiente e integração
 
   Divisão de tarefas:
  - Felipe: Enum TipoComando, Protocolo Controlavel e Extension verificarConexao()
  - Rogerio: Struct Termostato
  - Alex: Struct CameraSeguranca, implementação do desafio mutating e ajustes no protocolo
+ - Logan: Central de Controle, Loop da casa, Comandos finais, Filtro por ambiente e integração geral do sistema
 
  Parte desenvolvida:
  - Enum TipoComando
@@ -18,40 +20,55 @@
  - Struct CameraSeguranca
  - Implementação do desafio mutating
  - Ajustes no protocolo
+ - Central de Controle
+ - Loop da casa
+ - Comandos finais (Azul e 22)
+ - Filtro por ambiente
+ - Integração geral do sistema
 
  --------------------------------------------------------------------------------------
 
  Sobre Escalabilidade (Protocol Extensions):
  O uso de Protocol Extension permite que todos os dispositivos que implementam o protocolo
  Controlavel já tenham automaticamente um comportamento padrão para o método verificarConexao().
- Isso evita repetição de código, pois não precisamos implementar esse método em cada struct.
- Caso novos dispositivos sejam adicionados (como smart TV ou robô aspirador),
- eles já herdarão esse comportamento automaticamente, facilitando a manutenção e escalabilidade do sistema.
+ Isso evita repetição de código e facilita a manutenção e expansão do sistema.
 
  ----------------------------------------------------------------------------------------
 
  Sobre Prioridade de Execução (Sobrescrita em POP):
  Quando utilizamos Protocol Extension, podemos fornecer implementações padrão.
  Porém, se uma struct implementar o mesmo método, o Swift dá prioridade para a implementação da struct.
- No caso da CameraSeguranca, ela sobrescreve o método verificarConexao(),
- exibindo uma mensagem específica. Isso mostra que implementações concretas têm prioridade sobre as padrão.
 
  ------------------------------------------------------------------------------------------
 
- Sobre Structs e mutating (Desafio extra):
- Em Swift, structs são tipos por valor (value types). Isso significa que seus dados são copiados ao invés de referenciados.
- Para modificar uma propriedade interna dentro de um método, é necessário usar a palavra-chave mutating.
- Isso garante mais segurança, pois deixa explícito que o estado interno da struct será alterado.
+ Sobre Structs e mutating:
+ Structs são tipos por valor. Para alterar seu estado interno, usamos mutating,
+ garantindo segurança e clareza na modificação.
+
+ ----------------------------------------------------------------------------------------
+
+ Sobre Arrays e Polimorfismo:
+ O array [any Controlavel] permite armazenar diferentes structs que seguem o mesmo protocolo.
+ O Swift trata todos como Controlavel, permitindo polimorfismo.
+
+ ----------------------------------------------------------------------------------------
+
+ Sobre Arquitetura (POP vs OOP):
+ Protocolos permitem maior flexibilidade, reutilização e baixo acoplamento,
+ facilitando a escalabilidade do sistema.
 
 */
+
 // 1. Modelo de Comandos
+
 enum TipoComando {
     case ligar
     case desligar
     case ajustar
 }
 
-// 2. Criando Protocolo Controlavel
+// 2. Protocolo
+
 protocol Controlavel {
     var nome: String { get set }
     var ambiente: String { get set }
@@ -62,13 +79,15 @@ protocol Controlavel {
 }
 
 // 3. Extension
+
 extension Controlavel {
     func verificarConexao() {
-        print("\(nome) localizado em \(ambiente): Sinal Wi-Fi Estável 📶")
+        print("\(nome) localizado em \(ambiente): Sinal Wi-Fi Estável")
     }
 }
 
-// Struct da Luz
+// 4. Dispositivos
+
 struct LuzRGB: Controlavel {
     var nome: String
     var ambiente: String
@@ -89,12 +108,11 @@ struct LuzRGB: Controlavel {
                 print("Informe um valor para ajuste.")
                 return
             }
-            print("💡 \(nome) na \(ambiente) mudou a cor/brilho para: \(valor)")
+            print("\(nome) na \(ambiente) mudou para: \(valor)")
         }
     }
 }
 
-// Struct do Termostato
 struct Termostato: Controlavel {
     var nome: String
     var ambiente: String
@@ -107,20 +125,19 @@ struct Termostato: Controlavel {
     func processarComando(tipo: TipoComando, valor: String? = nil) {
         switch tipo {
         case .ligar:
-            print("❄️ \(nome) na \(ambiente) recebeu comando ligar. Temperatura alvo: \(valor ?? "Padrão") graus")
+            print("\(nome) na \(ambiente) ligado. Temperatura: \(valor ?? "Padrão")")
         case .desligar:
-            print("❄️ \(nome) na \(ambiente) foi desligado.")
+            print("\(nome) na \(ambiente) desligado.")
         case .ajustar:
             guard let valor = valor, !valor.isEmpty else {
-                print("Informe uma temperatura para ajuste.")
+                print("Informe temperatura.")
                 return
             }
-            print("❄️ \(nome) na \(ambiente) ajustou a temperatura para: \(valor) graus")
+            print("\(nome) ajustado para \(valor)")
         }
     }
 }
 
-// Struct da Camera de Seguranca
 struct CameraSeguranca: Controlavel {
     var nome: String
     var ambiente: String
@@ -133,47 +150,67 @@ struct CameraSeguranca: Controlavel {
     func processarComando(tipo: TipoComando, valor: String? = nil) {
         switch tipo {
         case .ligar:
-            print("🎥 Câmera \(nome) na \(ambiente) processando: ligar (Parâmetro: \(valor ?? "Padrão"))")
+            print("Câmera \(nome) ativada (\(valor ?? "Padrão"))")
         case .desligar:
-            print("🎥 Câmera \(nome) na \(ambiente) foi desligada.")
+            print("Câmera \(nome) desligada.")
         case .ajustar:
             guard let valor = valor, !valor.isEmpty else {
-                print("Informe um parâmetro para a câmera.")
+                print("Informe parâmetro.")
                 return
             }
-            print("🎥 Câmera \(nome) na \(ambiente) processando: ajustar (Parâmetro: \(valor))")
+            print("Câmera ajustada para \(valor)")
         }
     }
 
-    // Sobrescrita da Extension
     func verificarConexao() {
-        print("⚠️ CÂMERA \(nome) na \(ambiente): Conexão Segura e Criptografada Ativa 🔒")
+        print("CÂMERA \(nome): Conexão segura ativa")
     }
 }
 
-// Teste LuzRGB
+// 5. Central
+
 var luzSala = LuzRGB(nome: "Luz Principal", ambiente: "Sala")
+var ar = Termostato(nome: "Ar Condicionado", ambiente: "Quarto")
+var cam = CameraSeguranca(nome: "Frontal", ambiente: "Garagem")
 
-luzSala.verificarConexao()
-luzSala.processarComando(tipo: .ligar)
+var rede: [any Controlavel] = [luzSala, ar, cam]
+
+// 6. Loop
+
+print("\n=== SISTEMA ===\n")
+
+for i in 0..<rede.count {
+    rede[i].verificarConexao()
+    rede[i].processarComando(tipo: .ligar, valor: "Padrão")
+}
+
+// 7. Comandos
+
+print("\n=== AJUSTES ===\n")
+
 luzSala.processarComando(tipo: .ajustar, valor: "Azul")
-luzSala.processarComando(tipo: .desligar)
+ar.processarComando(tipo: .ajustar, valor: "22")
+
+// 8. Filtro
+
+print("\n=== SALA ===\n")
+
+let sala = rede.filter { $0.ambiente == "Sala" }
+
+for d in sala {
+    d.verificarConexao()
+}
+
+// 9. Estado
+
+print("\n=== ESTADO ===\n")
+
 luzSala.alterarEstado()
+ar.alterarEstado()
+cam.alterarEstado()
 
-// Teste Termostato
-var arCondicionadoQuarto = Termostato(nome: "Ar Condicionado", ambiente: "Quarto")
+print(luzSala.estaLigado)
+print(ar.estaLigado)
+print(cam.estaLigado)
 
-arCondicionadoQuarto.verificarConexao()
-arCondicionadoQuarto.processarComando(tipo: .ligar, valor: "Padrão")
-arCondicionadoQuarto.processarComando(tipo: .ajustar, valor: "22")
-arCondicionadoQuarto.processarComando(tipo: .desligar)
-arCondicionadoQuarto.alterarEstado()
-
-// Teste Camera de Seguranca
-var cameraGaragem = CameraSeguranca(nome: "Frontal", ambiente: "Garagem")
-
-cameraGaragem.verificarConexao()
-cameraGaragem.processarComando(tipo: .ligar)
-cameraGaragem.processarComando(tipo: .ajustar, valor: "Alta Resolução")
-cameraGaragem.processarComando(tipo: .desligar)
-cameraGaragem.alterarEstado()
+print("\n=== EXECUÇÃO FINALIZADA COM SUCESSO ===")
